@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Recommendation System</title>
+    <style>
+        :root {
+            --primary-color: #032541;
+            --secondary-color: #01b4e4;
+            --accent-color: #90cea1;
+            --text-color: #333;
+            --light-bg: #f5f5f5;
+            --card-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light-bg);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            margin-bottom: 0.5rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        .search-section {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: var(--card-shadow);
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        input, select, button {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        input {
+            flex-grow: 1;
+        }
+
+        button {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: var(--accent-color);
+        }
+
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .filter-item {
+            background-color: var(--accent-color);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .filter-item span {
+            margin-left: 5px;
+            font-weight: bold;
+        }
+
+        .movie-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .movie-card {
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.3s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .movie-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .movie-poster {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+        }
+
+        .movie-info {
+            padding: 1rem;
+        }
+
+        .movie-title {
+            font-size: 1rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .movie-year {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .movie-rating {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: var(--primary-color);
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .movie-genres {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 5px;
+        }
+
+        .movie-genre {
+            background-color: var(--light-bg);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+        }
+
+        .recommended-section {
+            margin-top: 2rem;
+        }
+
+        .recommended-section h2 {
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 200;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            overflow: auto;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 800px;
+            position: relative;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .movie-detail {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .movie-detail {
+                flex-direction: row;
+            }
+        }
+
+        .detail-poster {
+            flex: 0 0 300px;
+        }
+
+        .detail-poster img {
+            width: 100%;
+            border-radius: 8px;
+        }
+
+        .detail-info {
+            flex: 1;
+        }
+
+        .detail-title {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .detail-meta {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .detail-rating {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .detail-overview {
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .like-btn, .dislike-btn {
+            margin-right: 10px;
+            padding: 8px 16px;
+        }
+
+        .like-btn {
+            background-color: #4CAF50;
+        }
+
+        .dislike-btn {
+            background-color: #f44336;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            font-size: 1.2rem;
+            color: #666;
+        }
+
+        .error-msg {
+            color: #f44336;
+            text-align: center;
+            padding: 1rem;
+        }
+
+        @media (max-width: 480px) {
+            .movie-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+            
+            .search-box {
+                flex-direction: column;
+            }
+            
+            .modal-content {
+                margin: 10% 5%;
+                padding: 15px;
+            }
+        }
+
+        /* User preferences section */
+        .user-preferences {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: var(--card-shadow);
+        }
+
+        .preferences-title {
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        .liked-movies {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .liked-movie {
+            background-color: #e3f2fd;
+            border-radius: 4px;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+        }
+
+        .liked-movie img {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            margin-right: 10px;
+            border-radius: 4px;
+        }
+
+        .remove-liked {
+            margin-left: 10px;
+            cursor: pointer;
+            color: red;
+        }
+
+        .no-liked-msg {
+            color: #666;
+            font-style: italic;
+        }
+
+        /* Skeleton loading */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        .skeleton-card {
+            height: 380px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .skeleton-poster {
+            height: 300px;
+        }
+
+        .skeleton-title {
+            height: 20px;
+            margin: 10px;
+            width: 80%;
+            border-radius: 4px;
+        }
+
+        .skeleton-year {
+            height: 16px;
+            margin: 10px;
+            width: 40%;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Movie Recommendation System</h1>
+        <p>Discover movies based on your preferences</p>
+    </header>
+
+    <div class="container">
+        <section class="search-section">
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="Search for movies...">
+                <select id="genre-select">
+                    <option value="">All Genres</option>
+                </select>
+                <button id="search-btn">Search</button>
+            </div>
+            <div class="filters" id="active-filters">
+                <!-- Active filters will be added here -->
+            </div>
+        </section>
+        
+        <section class="user-preferences">
+            <h2 class="preferences-title">Your Movie Preferences</h2>
+            <div class="liked-movies" id="liked-movies">
+                <p class="no-liked-msg">You haven't liked any movies yet. Like movies to get better recommendations!</p>
+            </div>
+            <button id="clear-preferences">Clear All Preferences</button>
+        </section>
+
+        <section class="results-section">
+            <h2>Movie Results</h2>
+            <div class="movie-grid" id="movie-grid">
+                <!-- Skeleton loading -->
+                <div class="skeleton-card">
+                    <img src="C:\Users\ck412\OneDrive\Desktop\chatbot.png" alt="Description of image" width="300" height="200">
+
+                    <div class="skeleton-poster skeleton"></div>
+                    <div class="skeleton-title skeleton"></div>
+                    <div class="skeleton-year skeleton"></div>
+                </div>
+                <div class="skeleton-card">
+                    <div class="skeleton-poster skeleton"></div>
+                    <div class="skeleton-title skeleton"></div>
+                    <div class="skeleton-year skeleton"></div>
+                </div>
+                <div class="skeleton-card">
+                    <div class="skeleton-poster skeleton"></div>
+                    <div class="skeleton-title skeleton"></div>
+                    <div class="skeleton-year skeleton"></div>
+                </div>
+                <div class="skeleton-card">
+                    <div class="skeleton-poster skeleton"></div>
+                    <div class="skeleton-title skeleton"></div>
+                    <div class="skeleton-year skeleton"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="recommended-section">
+            <h2>Recommended For You</h2>
+            <div class="movie-grid" id="recommended-grid">
+                <!-- Recommendations will be loaded here -->
+                <p class="no-recommendations">Like some movies to get personalized recommendations</p>
+            </div>
+        </section>
+    </div>
+
+    <!-- Movie Detail Modal -->
+    <div id="movie-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="movie-detail" id="movie-detail">
+                <!-- Movie details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Movie database - in a real app, this would come from a backend API
+        const movies = [
+            {
+                id: 1,
+                title: "Inception",
+                year: 2010,
+                rating: 8.8,
+                poster: "C:\Users\ck412\OneDrive\Desktop\chatbot.png", 
+                genres: ["Action", "Sci-Fi", "Thriller"],
+                overview: "A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.",
+                director: "Christopher Nolan",
+                actors: ["Leonardo DiCaprio", "Joseph Gordon-Levitt", "Ellen Page"]
+            },
+            {
+                id: 2,
+                title: "The Shawshank Redemption",
+                year: 1994,
+                rating: 9.3,
+                poster: "/api/placeholder/200/300",
+                genres: ["Drama"],
+                overview: "Two imprisoned men bond over a number of years, finding solace and eventual redemption through acts of common decency.",
+                director: "Frank Darabont",
+                actors: ["Tim Robbins", "Morgan Freeman", "Bob Gunton"]
+            },
+            {
+                id: 3,
+                title: "The Dark Knight",
+                year: 2008,
+                rating: 9.0,
+                poster: "/api/placeholder/200/300",
+                genres: ["Action", "Crime", "Drama"],
+                overview: "When the menace known as the Joker wreaks havoc and chaos on the people of Gotham, Batman must accept one of the greatest psychological and physical tests of his ability to fight injustice.",
+                director: "Christopher Nolan",
+                actors: ["Christian Bale", "Heath Ledger", "Aaron Eckhart"]
+            },
+            {
+                id: 4,
+                title: "Pulp Fiction",
+                year: 1994,
+                rating: 8.9,
+                poster: "/api/placeholder/200/300",
+                genres: ["Crime", "Drama"],
+                overview: "The lives of two mob hitmen, a boxer, a gangster and his wife, and a pair of diner bandits intertwine in four tales of violence and redemption.",
+                director: "Quentin Tarantino",
+                actors: ["John Travolta", "Uma Thurman", "Samuel L. Jackson"]
+            },
+            {
+                id: 5,
+                title: "The Matrix",
+                year: 1999,
+                rating: 8.7,
+                poster: "/api/placeholder/200/300",
+                genres: ["Action", "Sci-Fi"],
+                overview: "A computer hacker learns from mysterious rebels about the true nature of his reality and his role in the war against its controllers.",
+                director: "Lana Wachowski, Lilly Wachowski",
+                actors: ["Keanu Reeves", "Laurence Fishburne", "Carrie-Anne Moss"]
+            },
+            {
+                id: 6,
+                title: "Forrest Gump",
+                year: 1994,
+                rating: 8.8,
+                poster: "/api/placeholder/200/300",
+                genres: ["Drama", "Romance"],
+                overview: "The presidencies of Kennedy and Johnson, the Vietnam War, the Watergate scandal and other historical events unfold from the perspective of an Alabama man with an IQ of 75, whose only desire is to be reunited with his childhood sweetheart.",
+                director: "Robert Zemeckis",
+                actors: ["Tom Hanks", "Robin Wright", "Gary Sinise"]
+            },
+            {
+                id: 7,
+                title: "Interstellar",
+                year: 2014,
+                rating: 8.6,
+                poster: "/api/placeholder/200/300",
+                genres: ["Adventure", "Drama", "Sci-Fi"],
+                overview: "A team of explorers travel through a wormhole in space in an attempt to ensure humanity's survival.",
+                director: "Christopher Nolan",
+                actors: ["Matthew McConaughey", "Anne Hathaway", "Jessica Chastain"]
+            },
+            {
+                id: 8,
+                title: "The Godfather",
+                year: 1972,
+                rating: 9.2,
+                poster: "/api/placeholder/200/300",
+                genres: ["Crime", "Drama"],
+                overview: "The aging patriarch of an organized crime dynasty transfers control of his clandestine empire to his reluctant son.",
+                director: "Francis Ford Coppola",
+                actors: ["Marlon Brando", "Al Pacino", "James Caan"]
+            },
+            {
+                id: 9,
+                title: "Fight Club",
+                year: 1999,
+                rating: 8.8,
+                poster: "/api/placeholder/200/300",
+                genres: ["Drama"],
+                overview: "An insomniac office worker and a devil-may-care soapmaker form an underground fight club that evolves into something much, much more.",
+                director: "David Fincher",
+                actors: ["Brad Pitt", "Edward Norton", "Helena Bonham Carter"]
+            },
+            {
+                id: 10,
+                title: "Goodfellas",
+                year: 1990,
+                rating: 8.7,
+                poster: "/api/placeholder/200/300",
+                genres: ["Crime", "Drama"],
+                overview: "The story of Henry Hill and his life in the mob, covering his relationship with his wife Karen Hill and his mob partners Jimmy Conway and Tommy DeVito in the Italian-American crime syndicate.",
+                director: "Martin Scorsese",
+                actors: ["Robert De Niro", "Ray Liotta", "Joe Pesci"]
+            },
+            {
+                id: 11,
+                title: "The Avengers",
+                year: 2012,
+                rating: 8.0,
+                poster: "/api/placeholder/200/300",
+                genres: ["Action", "Adventure", "Sci-Fi"],
+                overview: "Earth's mightiest heroes must come together and learn to fight as a team if they are going to stop the mischievous Loki and his alien army from enslaving humanity.",
+                director: "Joss Whedon",
+                actors: ["Robert Downey Jr.", "Chris Evans", "Scarlett Johansson"]
+            },
+            {
+                id: 12,
+                title: "Titanic",
+                year: 1997,
+                rating: 7.8,
+                poster: "/api/placeholder/200/300",
+                genres: ["Drama", "Romance"],
+                overview: "A seventeen-year-old aristocrat falls in love with a kind but poor artist aboard the luxurious, ill-fated R.M.S. Titanic.",
+                director: "James Cameron",
+                actors: ["Leonardo DiCaprio", "Kate Winslet", "Billy Zane"]
+            },
+            {
+                id: 13,
+                title: "Jurassic Park",
+                year: 1993,
+                rating: 8.1,
+                poster: "/api/placeholder/200/300",
+                genres: ["Adventure", "Sci-Fi", "Thriller"],
+                overview: "During a preview tour, a theme park suffers a major power breakdown that allows its cloned dinosaur exhibits to run amok.",
+                director: "Steven Spielberg",
+                actors: ["Sam Neill", "Laura Dern", "Jeff Goldblum"]
+            },
+            {
+                id: 14,
+                title: "The Lion King",
+                year: 1994,
+                rating: 8.5,
+                poster: "/api/placeholder/200/300",
+                genres: ["Animation", "Adventure", "Drama"],
+                overview: "Lion prince Simba and his father are targeted by his bitter uncle, who wants to ascend the throne himself.",
+                director: "Roger Allers, Rob Minkoff",
+                actors: ["Matthew Broderick", "Jeremy Irons", "James Earl Jones"]
+            },
+            {
+                id: 15,
+                title: "Star Wars: Episode IV - A New Hope",
+                year: 1977,
+                rating: 8.6,
+                poster: "/api/placeholder/200/300",
+                genres: ["Action", "Adventure", "Fantasy"],
+                overview: "Luke Skywalker joins forces with a Jedi Knight, a cocky pilot, a Wookiee and two droids to save the galaxy from the Empire's world-destroying battle station, while also attempting to rescue Princess Leia from the mysterious Darth Vader.",
+                director: "George Lucas",
+                actors: ["Mark Hamill", "Harrison Ford", "Carrie Fisher"]
+            },
+            {
+                id: 16,
+                title: "The Social Network",
+                year: 2010,
+                rating: 7.7,
+                poster: "/api/placeholder/200/300",
+                genres: ["Biography", "Drama"],
+                overview: "Harvard student Mark Zuckerberg creates the social networking site that would become known as Facebook, but is later sued by two brothers who claimed he stole their idea, and the co-founder who was later squeezed out of the business.",
+                director: "David Fincher",
+                actors: ["Jesse Eisenberg", "Andrew Garfield", "Justin Timberlake"]
+            },
+            {
+                id: 17,
+                title: "The Grand Budapest Hotel",
+                year: 2014,
+                rating: 8.1,
+                poster: "/api/placeholder/200/300",
+                genres: ["Adventure", "Comedy", "Crime"],
+                overview: "A writer encounters the owner of an aging high-class hotel, who tells him of his early years serving as a lobby boy in the hotel's glorious years under an exceptional concierge.",
+                director: "Wes Anderson",
+                actors: ["Ralph Fiennes", "F. Murray Abraham", "Mathieu Amalric"]
+            },
+            {
+                id: 18,
+                title: "The Silence of the Lambs",
+                year: 1991,
+                rating: 8.6,
+                poster: "/api/placeholder/200/300",
+                genres: ["Crime", "Drama", "Thriller"],
+                overview: "A young F.B.I. cadet must receive the help of an incarcerated and manipulative cannibal killer to help catch another serial killer, a madman who skins his victims.",
+                director: "Jonathan Demme",
+                actors: ["Jodie Foster", "Anthony Hopkins", "Lawrence A. Bonney"]
+            },
+            {
+                id: 19,
+                title: "Blade Runner",
+                year: 1982,
+                rating: 8.1,
+                poster: "/api/placeholder/200/300",
+                genres: ["Action", "Drama", "Sci-Fi"],
+                overview: "A blade runner must pursue and terminate four replicants who stole a ship in space and have returned to Earth to find their creator.",
+                director: "Ridley Scott",
+                actors: ["Harrison Ford", "Rutger Hauer", "Sean Young"]
+            },
+            {
+                id: 20,
+                title: "The Departed",
+                year: 2006,
+                rating: 8.5,
+                poster: "/api/placeholder/200/300",
+                genres: ["Crime", "Drama", "Thriller"],
+                overview: "An undercover cop and a mole in the police attempt to identify each other while infiltrating an Irish gang in South Boston.",
+                director: "Martin Scorsese",
+                actors: ["Leonardo DiCaprio", "Matt Damon", "Jack Nicholson"]
+            }
+        ];
+
+        // DOM elements
+        const searchInput = document.getElementById('search-input');
+        const genreSelect = document.getElementById('genre-select');
+        const searchBtn = document.getElementById('search-btn');
+        const activeFilters = document.getElementById('active-filters');
+        const movieGrid = document.getElementById('movie-grid');
+        const recommendedGrid = document.getElementById('recommended-grid');
+        const movieModal = document.getElementById('movie-modal');
+        const movieDetail = document.getElementById('movie-detail');
+        const closeModal = document.querySelector('.close-modal');
+        const likedMoviesContainer = document.getElementById('liked-movies');
+        const clearPreferencesBtn = document.getElementById('clear-preferences');
+
+        // App state
+        let currentFilters = {
+            search: '',
+            genre: ''
+        };
+        let likedMovies = [];
+
+        // Initialize the app
+        function init() {
+            loadGenres();
+            loadMovies();
+            loadLikedMovies();
+            updateRecommendations();
+            setupEventListeners();
+        }
+
+        // Load unique genres from movies
+        function loadGenres() {
+            const genres = new Set();
+            movies.forEach(movie => {
+                movie.genres.forEach(genre => genres.add(genre));
+            });
+            
+            // Sort genres alphabetically
+            const sortedGenres = Array.from(genres).sort();
+            
+            // Add genres to select dropdown
+            sortedGenres.forEach(genre => {
+                const option = document.createElement('option');
+                option.value = genre;
+                option.textContent = genre;
+                genreSelect.appendChild(option);
+            });
+        }
+
+        // Load movies with filters
+        function loadMovies() {
+            // Clear previous movies
+            movieGrid.innerHTML = '';
+            
+            // Filter movies
+            const filteredMovies = movies.filter(movie => {
+                // Filter by search term
+                const matchesSearch = currentFilters.search === '' || 
+                    movie.title.toLowerCase().includes(currentFilters.search.toLowerCase());
+                
+                // Filter by genre
+                const matchesGenre = currentFilters.genre === '' || 
+                    movie.genres.includes(currentFilters.genre);
+                
+                return matchesSearch && matchesGenre;
+            });
+            
+            // Display filtered movies
+            if (filteredMovies.length === 0) {
+                movieGrid.innerHTML = '<p class="error-msg">No movies found matching your criteria.</p>';
+                return;
+            }
+            
+            // Create movie cards
+            filteredMovies.forEach(movie => {
+                const card = createMovieCard(movie);
+                movieGrid.appendChild(card);
+            });
+        }
+
+        // Create movie card element
+        function createMovieCard(movie) {
+            const card = document.createElement('div');
+            card.className = 'movie-card';
+            card.dataset.id = movie.id;
+            
+            // Check if movie is liked
+            const isLiked = likedMovies.some(m => m.id === movie.id);
+            if (isLiked) {
+                card.classList.add('liked');
+            }
+            
+            card.innerHTML = `
+                <img src="${movie.poster}" alt="${movie.title}" class="movie-poster">
+                <div class="movie-rating">${movie.rating.toFixed(1)}</div>
+                <div class="movie-info">
+                    <h3 class="movie-title">${movie.title}</h3>
+                    <div class="movie-year">${movie.year}</div>
+                    <div class="movie-genres">
+                        ${movie.genres.map(genre => `<span class="movie-genre">${genre}</span>`).join('')}
+                    </div>
+                </div>
+            `;
+            
+            // Open modal when clicking on card
+            card.addEventListener('click', () => openMovieDetail(movie));
+            
+            return card;
+        }
+
+        // Open movie detail modal
+        function openMovieDetail(movie) {
+            // Check if movie is liked
+            const isLiked = likedMovies.some(m => m.id === movie.id);
+            
+            // Update modal content
+            movieDetail.innerHTML = `
+                <div class="detail-poster">
+                    <img src="${movie.poster}" alt="${movie.title}">
+                </div>
+                <div class="detail-info">
+                    <h2 class="detail-title">${movie.title} (${movie.year})</h2>
+                    <div class="detail-meta">
+                        <span class="detail-rating">⭐ ${movie.rating.toFixed(1)}</span>
+                        <span class="detail-genres">${movie.genres.join(', ')}</span>
+                    </div>
+                    <p class="detail-overview">${movie.overview}</p>
+                    <p><strong>Director:</strong> ${movie.director}</p>
+                    <p><strong>Starring:</strong> ${movie.actors.join(', ')}</p>
+                    <div class="detail-actions">
+                        <button class="like-btn" ${isLiked ? 'disabled' : ''}>
+                            ${isLiked ? 'Liked ✓' : 'Like 👍'}
+                        </button>
+                        <button class="dislike-btn" ${isLiked ? '' : 'disabled'}>
+                            ${isLiked ? 'Unlike 👎' : 'Disliked'}
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Add event listeners for like/dislike buttons
+            const likeBtn = movieDetail.querySelector('.like-btn');
+            const dislikeBtn = movieDetail.querySelector('.dislike-btn');
+            
+            likeBtn.addEventListener('click', () => {
+                if (!isLiked) {
+                    likeMovie(movie);
+                    likeBtn.textContent = 'Liked ✓';
+                    likeBtn.disabled = true;
+                    dislikeBtn.disabled = false;
+                    dislikeBtn.textContent = 'Unlike 👎';
+                }
+            });
+            
+            dislikeBtn.addEventListener('click', () => {
+                if (isLiked) {
+                    unlikeMovie(movie.id);
+                    dislikeBtn.textContent = 'Disliked';
+                    dislikeBtn.disabled = true;
+                    likeBtn.disabled = false;
+                    likeBtn.textContent = 'Like 👍';
+                }
+            });
+            
+            // Show modal
+            movieModal.style.display = 'block';
+        }
+
+        // Like a movie
+        function likeMovie(movie) {
+            // Only add if not already liked
+            if (!likedMovies.some(m => m.id === movie.id)) {
+                likedMovies.push({
+                    id: movie.id,
+                    title: movie.title,
+                    poster: movie.poster,
+                    genres: movie.genres
+                });
+                saveLikedMovies();
+                updateLikedMoviesDisplay();
+                updateRecommendations();
+            }
+        }
+
+        // Unlike a movie
+        function unlikeMovie(movieId) {
+            likedMovies = likedMovies.filter(movie => movie.id !== movieId);
+            saveLikedMovies();
+            updateLikedMoviesDisplay();
+            updateRecommendations();
+        }
+
+                    // Save liked movies to localStorage
+        function saveLikedMovies() {
+            localStorage.setItem('likedMovies', JSON.stringify(likedMovies));
+        }
+
+        // Load liked movies from localStorage
+        function loadLikedMovies() {
+            const saved = localStorage.getItem('likedMovies');
+            if (saved) {
+                likedMovies = JSON.parse(saved);
+                updateLikedMoviesDisplay();
+            }
+        }
+
+        // Update liked movies display
+        function updateLikedMoviesDisplay() {
+            likedMoviesContainer.innerHTML = '';
+            
+            if (likedMovies.length === 0) {
+                likedMoviesContainer.innerHTML = '<p class="no-liked-msg">You haven\'t liked any movies yet. Like movies to get better recommendations!</p>';
+                return;
+            }
+            
+            likedMovies.forEach(movie => {
+                const likedMovie = document.createElement('div');
+                likedMovie.className = 'liked-movie';
+                likedMovie.innerHTML = `
+                    <img src="${movie.poster}" alt="${movie.title}">
+                    <span>${movie.title}</span>
+                    <span class="remove-liked" data-id="${movie.id}">✕</span>
+                `;
+                likedMoviesContainer.appendChild(likedMovie);
+                
+                // Add event listener to remove button
+                const removeBtn = likedMovie.querySelector('.remove-liked');
+                removeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = parseInt(removeBtn.dataset.id);
+                    unlikeMovie(id);
+                });
+                
+                // Add event listener to open movie detail
+                likedMovie.addEventListener('click', () => {
+                    const movie = movies.find(m => m.id === parseInt(likedMovie.querySelector('.remove-liked').dataset.id));
+                    if (movie) {
+                        openMovieDetail(movie);
+                    }
+                });
+            });
+        }
+
+        // Generate recommendations based on liked movies
+        function updateRecommendations() {
+            recommendedGrid.innerHTML = '';
+            
+            if (likedMovies.length === 0) {
+                recommendedGrid.innerHTML = '<p class="no-recommendations">Like some movies to get personalized recommendations</p>';
+                return;
+            }
+            
+            // Get recommendations based on content-based filtering
+            const recommendations = getRecommendations();
+            
+            if (recommendations.length === 0) {
+                recommendedGrid.innerHTML = '<p class="no-recommendations">No recommendations available at this time</p>';
+                return;
+            }
+            
+            // Create movie cards for recommendations
+            recommendations.forEach(movie => {
+                const card = createMovieCard(movie);
+                recommendedGrid.appendChild(card);
+            });
+        }
+
+        // Content-based filtering recommendation algorithm
+        function getRecommendations() {
+            if (likedMovies.length === 0) return [];
+            
+            // Get all genres from liked movies
+            const likedGenres = {};
+            likedMovies.forEach(movie => {
+                movie.genres.forEach(genre => {
+                    if (!likedGenres[genre]) {
+                        likedGenres[genre] = 0;
+                    }
+                    likedGenres[genre]++;
+                });
+            });
+            
+            // Calculate similarity scores for each movie
+            const movieScores = movies.map(movie => {
+                // Skip if movie is already liked
+                if (likedMovies.some(m => m.id === movie.id)) {
+                    return { movie, score: -1 };
+                }
+                
+                // Calculate genre similarity score
+                let score = 0;
+                movie.genres.forEach(genre => {
+                    if (likedGenres[genre]) {
+                        score += likedGenres[genre];
+                    }
+                });
+                
+                // Normalize score by number of genres
+                score = score / movie.genres.length;
+                
+                return { movie, score };
+            });
+            
+            // Sort movies by score (highest first) and filter out already liked movies
+            const sortedRecommendations = movieScores
+                .filter(item => item.score > 0)
+                .sort((a, b) => b.score - a.score)
+                .map(item => item.movie);
+            
+            // Return top 6 recommendations
+            return sortedRecommendations.slice(0, 6);
+        }
+
+        // Update active filters display
+        function updateFiltersDisplay() {
+            activeFilters.innerHTML = '';
+            
+            if (currentFilters.search) {
+                const filterItem = document.createElement('div');
+                filterItem.className = 'filter-item';
+                filterItem.innerHTML = `Search: ${currentFilters.search} <span data-filter="search">✕</span>`;
+                activeFilters.appendChild(filterItem);
+                
+                // Add event listener to remove filter
+                const removeBtn = filterItem.querySelector('span');
+                removeBtn.addEventListener('click', () => {
+                    currentFilters.search = '';
+                    searchInput.value = '';
+                    updateFiltersDisplay();
+                    loadMovies();
+                });
+            }
+            
+            if (currentFilters.genre) {
+                const filterItem = document.createElement('div');
+                filterItem.className = 'filter-item';
+                filterItem.innerHTML = `Genre: ${currentFilters.genre} <span data-filter="genre">✕</span>`;
+                activeFilters.appendChild(filterItem);
+                
+                // Add event listener to remove filter
+                const removeBtn = filterItem.querySelector('span');
+                removeBtn.addEventListener('click', () => {
+                    currentFilters.genre = '';
+                    genreSelect.value = '';
+                    updateFiltersDisplay();
+                    loadMovies();
+                });
+            }
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Search button click
+            searchBtn.addEventListener('click', () => {
+                currentFilters.search = searchInput.value.trim();
+                currentFilters.genre = genreSelect.value;
+                updateFiltersDisplay();
+                loadMovies();
+            });
+            
+            // Enter key in search input
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    currentFilters.search = searchInput.value.trim();
+                    currentFilters.genre = genreSelect.value;
+                    updateFiltersDisplay();
+                    loadMovies();
+                }
+            });
+            
+            // Genre select change
+            genreSelect.addEventListener('change', () => {
+                currentFilters.genre = genreSelect.value;
+                updateFiltersDisplay();
+                loadMovies();
+            });
+            
+            // Close modal
+            closeModal.addEventListener('click', () => {
+                movieModal.style.display = 'none';
+            });
+            
+            // Close modal when clicking outside
+            window.addEventListener('click', (e) => {
+                if (e.target === movieModal) {
+                    movieModal.style.display = 'none';
+                }
+            });
+            
+            // Clear preferences button
+            clearPreferencesBtn.addEventListener('click', () => {
+                likedMovies = [];
+                saveLikedMovies();
+                updateLikedMoviesDisplay();
+                updateRecommendations();
+                loadMovies(); // Reload movies to reset "liked" status
+            });
+        }
+
+        // Initialize the app
+        init();
